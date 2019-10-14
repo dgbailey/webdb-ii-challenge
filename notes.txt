@@ -1,0 +1,104 @@
+Migrations & rollbacks   && normalized vs denormalized data
+
+1) Basics consistency and no redundancy
+2) Insert anomalies (not being able to insert due to required fields), Update anomalies, deletion anomalies (perhaps deleting info you didn't want to due to duplicates)
+https://www.essentialsql.com/get-ready-to-learn-sql-database-normalization-explained-in-simple-english/
+
+https://support.microsoft.com/en-us/help/283878/description-of-the-database-normalization-basics
+2) Separate concerns to avoid anomalies (updating repeated other programming operations etc)
+3) If data that exists in more than one place must be changed, the data must be changed in exactly the same way in all locations. 
+4) If the first three rules are observed, the database is considered to be in "third normal form.
+
+Fist normal form:
+No composite or multivalued attributes
+Each column containing atomic values. There are no repeating groups of columns.
+Eliminate repeating groups in individual tables.
+Create separate tables for sets of values that apply to multiple records.
+Relate these tables with a foreign key.
+
+Second normal form:
+-->functional dependence exposes anomalies (deletion, updating, insertion,query)
+--> it is good not to have multiple functional dependencies in a table
+    --> loss of information, logical inconsistency due to insertion anomalies w/o constraints.
+--> it is really about being able to uniquely identify a row of data
+    --> in composite primary key scenarios, if a column only depends on half the the composite, it is partially dependent
+--> tables should mostly be about one thing (split up and user foreign keys if you find otherwise?)
+-->Keep a look out for composite primary keys, are columns only dependent on one of those keys?  This is a clue for partial dependency.
+--> Be in first normal
+-- When all the columns relate to the primary key, they naturally share a common purpose, such as describing an employe
+-->This stems from the primary key identifying the main topic at hand, 
+-->such as identifying buildings, employees, or classes, and the columns, serving to add meaning through descriptive attributes.
+**Create separate tables for sets of values that apply to multiple records.
+Relate these tables with a foreign key.
+
+-->ask yourself, “Does this column serve to describe what the primary key identifies?”
+
+-->can one user have many roles, yourself
+--> can the same role belong to more than one user, yes?
+
+Third normal form:
+
+Eliminate fields that do not depend on the key.
+transitive dependency
+does one column depend on another column that is dependent on a joint primary key?  this one column is transitively related to the primary keys
+
+5) Foreign keys, used for identifying relationships in tables
+    --> knex Note that the foreign key can only be created after the reference table.
+    --> Do not forget foreign key enforcement in knex config file 
+    --> non negative, non nullable
+    --> drop function 
+    --> Order is also a concern when seeding. We want to create seeds in the same order we created our tables. In other words, don’t create a seed with a foreign key, until that reference record exists.
+
+
+a) one to many: which table contains the foreign key? The foreign key always goes in teh many table. The many side of the relationship.
+b) Many to many: requires an intermediary table to link the two together.  This keeps track of the relationship between the two.
+
+
+Schemas
+
+1) Dimensional schemas are not nearly as efficient as E-R schemas for updating discrete records, but they are excellent for queries that analyze the business across multiple dimension.
+2) Dimensional Modeling is based on a single, highly regular data structure called a star schema (or snowflake schema for the normalized form).
+3) A snowflake schema is a star schema with fully normalised (3NF) dimensions. It gets its name from that it has a similar shape than a snowflake.
+4) Cardinality is a fancy way of describing one to many or many to many relationships
+
+Steps to starting dimensional Modeling
+--> Select the business process
+--> Declare the Fact Grain  -- the level of granularity captyred higher grain (month) low grain (day)
+--> Choose the dimensions -- Each dimension is defined by its primary key (PK) which serves for the referential integrity with any given fact table to which is joined. Kimball’s rule of thumb is that less than 15 dimensions.
+    --> Dimension tables tend to be :
+
+        relatively shallow in terms of number of row (often far fewer than 1 million rows)
+        but are wide with many large columns.
+
+      
+
+--> Identify the facts
+
+  A general fact table consists of two main attribute groups:
+
+        Foreign keys to dimensional tables
+        Measures
+
+        Fact tables are where we store these measurements. They hold business data that can be aggregated across dimension combinations. B
+
+        --> facts
+        Transaction table:
+        This is the simplest and most common type of fact table. The grain of this type is one row per transaction, or one row per line on a transaction. 
+        The grain of a transaction fact table is a point in space and time. They hold the smallest of business details.
+        https://www.vertabelo.com/blog/facts-about-facts-organizing-fact-tables-in-data-warehouse-systems/
+
+--> knex migrate:latest knex will not make the change. Migrations will only run once. 
+-->knex migrate:make accounts-schema-update
+
+And once we’ve written our updates into this file and then once again
+
+knex migrate:latest
+
+If we migrate our database and then quickly realize something isn’t right, we can edit the migration file. However we will first need to rolllback our last migration.
+
+knex migrate:rollback
+
+
+
+
+
